@@ -1,0 +1,17 @@
+(library
+ (name interval_tree_test)
+ (libraries alcotest interval-tree)
+ (modules
+  (:standard \ test_runner)))
+
+(executable
+ (name test_runner)
+ (libraries alcotest interval_tree_test)
+ (modules test_runner))
+
+(rule
+ (alias runtest)
+ (action
+  (run ./test_runner.exe -q --color=always)))
+
+(include_subdirs unqualified)
