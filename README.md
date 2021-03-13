@@ -1,6 +1,6 @@
 # interval-tree
 
-[![Actions Status](https://github.com/Dan/interval-tree/workflows/CI/badge.svg)](https://github.com/Dan/interval-tree/actions)
+[![Actions Status](https://github.com/dgllghr/interval-tree/workflows/CI/badge.svg)](https://github.com/dgllghr/interval-tree/actions)
 
 An immutable interval tree data structure. Interval trees are great for finding intervals which overlap a given interval.
 
@@ -30,16 +30,16 @@ let module Ivl = IT.Interval in
 (* Build the tree *)
 let tree =
   IT.empty
-  |> IT.insert (Ivl.incl_excl 0 10) "foo"
-  |> IT.insert (Ivl.incl_excl 0 10) "foo2"
-  |> IT.insert (Ivl.excl_incl 0 10) "bar"
-  |> IT.insert (Ivl.incl_incl 5 10) "baz"
-  |> IT.insert (Ivl.excl_excl 4 10) "oof"
-  |> IT.insert (Ivl.unbnd_excl 4) "zab"
+  |> IT.insert (Ivl.create (Included 0) (Excluded 10)) "foo"
+  |> IT.insert (Ivl.create (Included 0) (Excluded 10)) "foo2"
+  |> IT.insert (Ivl.create (Excluded 0) (Included 10)) "bar"
+  |> IT.insert (Ivl.create (Included 5) (Included 10)) "baz"
+  |> IT.insert (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+  |> IT.insert (Ivl.create Unbounded (Excluded 4)) "zab"
 in
 
 (* Query the tree *)
-let query = Ivl.unbnd_incl 4 in
+let query = Ivl.create Unbounded (Included 4) in
 IT.query_interval query tree
 |> IT.Query_results.to_list
 (* Results in:

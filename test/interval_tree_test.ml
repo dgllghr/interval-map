@@ -6,13 +6,14 @@ let create_and_insert () =
   let module Ivl = IT.Interval in
   let t =
     IT.empty
-    |> IT.insert (Ivl.incl_excl 0 10) "foo"
-    |> IT.insert (Ivl.excl_incl 0 10) "bar"
-    |> IT.insert (Ivl.incl_incl 5 10) "baz"
-    |> IT.insert (Ivl.excl_excl 5 10) "oof"
-    |> IT.insert (Ivl.unbnd_incl 5) "rab"
+    |> IT.insert (Ivl.create (Included 0) (Excluded 10)) "foo"
+    |> IT.insert (Ivl.create (Included 0) (Excluded 10)) "foo2"
+    |> IT.insert (Ivl.create (Excluded 0) (Included 10)) "bar"
+    |> IT.insert (Ivl.create (Included 5) (Included 10)) "baz"
+    |> IT.insert (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+    |> IT.insert (Ivl.create Unbounded (Excluded 4)) "zab"
   in
-  check int "expected size" 5 (IT.size t)
+  check int "expected size" 6 (IT.size t)
 
 let query () =
   let module IT = Make (Int) in
@@ -46,27 +47,35 @@ let query () =
   let tree = ref IT.empty in
   let c = ref 0 in
   while !c < 1000 do
-    let ivl = rand_ivl () in
-    ivls := ivl :: !ivls;
-    tree := IT.insert ivl (Random.int 10) !tree;
-    c := !c + 1
+    try
+      let ivl = rand_ivl () in
+      ivls := ivl :: !ivls;
+      tree := IT.insert ivl (Random.int 10) !tree;
+      c := !c + 1
+    with
+    | Interval_tree.Invalid_interval ->
+      ()
   done;
   (* query the tree with random intervals *)
   c := 0;
   while !c < 1000 do
-    let query = rand_ivl () in
-    let expected_count =
-      List.fold_left
-        (fun acc ivl -> if Ivl.overlaps query ivl then acc + 1 else acc)
-        0
-        !ivls
-    in
-    let results_count =
-      IT.query_interval query !tree
-      |> IT.Query_results.fold (fun acc (_, xs) -> acc + List.length xs) 0
-    in
-    check int "same number of query results" expected_count results_count;
-    c := !c + 1
+    try
+      let query = rand_ivl () in
+      let expected_count =
+        List.fold_left
+          (fun acc ivl -> if Ivl.overlaps query ivl then acc + 1 else acc)
+          0
+          !ivls
+      in
+      let results_count =
+        IT.query_interval query !tree
+        |> IT.Query_results.fold (fun acc (_, xs) -> acc + List.length xs) 0
+      in
+      check int "same number of query results" expected_count results_count;
+      c := !c + 1
+    with
+    | Interval_tree.Invalid_interval ->
+      ()
   done;
   flush stderr
 

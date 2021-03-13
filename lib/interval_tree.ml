@@ -1,6 +1,10 @@
 (* Based (heavily) on
    https://github.com/jgblight/im_interval_tree/blob/main/src/interval.rs *)
 
+module type Comparable = Comparable.S
+
+exception Invalid_interval = Interval.Invalid_interval
+
 module Make (Bound_compare : Comparable.S) = struct
   module Bound = Bound.Make (Bound_compare)
   module Interval = Interval.Make (Bound)
@@ -51,8 +55,8 @@ module Make (Bound_compare : Comparable.S) = struct
     let leaf interval values = create interval None None values
 
     let size node =
-      let rec go { left; right; _ } size =
-        let size = size + 1 in
+      let rec go { left; right; values; _ } size =
+        let size = size + List.length values in
         match left, right with
         | None, None ->
           size
@@ -218,4 +222,7 @@ module Make (Bound_compare : Comparable.S) = struct
     { root = Some new_root }
 
   let query_interval interval { root } = Query_results.create interval root
+
+  let query_interval_list interval { root } =
+    Query_results.create interval root |> Query_results.to_list
 end

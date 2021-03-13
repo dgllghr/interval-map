@@ -1,26 +1,31 @@
+exception Invalid_interval
+
 module Make (Bound : Bound.S) = struct
+  open Bound
+
   type t =
     { low : Bound.t
     ; high : Bound.t
     }
 
-  let create low high = { low; high }
+  let is_valid_bounds low high =
+    match low, high with
+    | Included low, Included high ->
+      low <= high
+    | Included low, Excluded high
+    | Excluded low, Included high
+    | Excluded low, Excluded high ->
+      low < high
+    | _ ->
+      true
 
-  let incl_incl low high = { low = Included low; high = Included high }
+  let create low high =
+    if is_valid_bounds low high then
+      { low; high }
+    else
+      raise Invalid_interval
 
-  let incl_excl low high = { low = Included low; high = Excluded high }
-
-  let excl_incl low high = { low = Excluded low; high = Included high }
-
-  let excl_excl low high = { low = Excluded low; high = Excluded high }
-
-  let unbnd_incl high = { low = Unbounded; high = Included high }
-
-  let unbnd_excl high = { low = Unbounded; high = Excluded high }
-
-  let incl_unbnd low = { low = Included low; high = Unbounded }
-
-  let excl_unbnd low = { low = Excluded low; high = Unbounded }
+  let is_valid { low; high } = is_valid_bounds low high
 
   let low_bound_compare a b = Bound.compare_lower a.low b.low
 
@@ -33,18 +38,7 @@ module Make (Bound : Bound.S) = struct
     else
       low_bound_cmp
 
-  let is_valid { low; high } =
-    match low, high with
-    | Included low, Included high ->
-      low <= high
-    | Included low, Excluded high
-    | Excluded low, Included high
-    | Excluded low, Excluded high ->
-      low < high
-    | _ ->
-      true
-
-  let get_overlap ivl_a ivl_b =
+  let overlap_low_high ivl_a ivl_b =
     let low =
       if low_bound_compare ivl_a ivl_b < 0 then
         ivl_b.low
@@ -57,11 +51,17 @@ module Make (Bound : Bound.S) = struct
       else
         ivl_b.high
     in
+    low, high
+
+  let overlap_interval ivl_a ivl_b =
+    let low, high = overlap_low_high ivl_a ivl_b in
     let interval = { low; high } in
     if is_valid interval then
       Some interval
     else
       None
 
-  let overlaps ivl_a ivl_b = get_overlap ivl_a ivl_b |> Option.is_some
+  let overlaps ivl_a ivl_b =
+    let low, high = overlap_low_high ivl_a ivl_b in
+    is_valid_bounds low high
 end
