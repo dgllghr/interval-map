@@ -1,5 +1,6 @@
 (lang dune 2.0)
 (name interval-map)
+(version 0.1.0)
 (documentation "https://dgllghr.github.io/interval-map/")
 (source (github dgllghr/interval-map))
 (license MIT)
