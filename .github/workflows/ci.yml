@@ -32,7 +32,7 @@ jobs:
         id: cache-opam
         with:
           path: ~/.opam
-          key: v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-${{ hashFiles('interval-tree.opam.locked') }}
+          key: v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-${{ hashFiles('interval-map.opam.locked') }}
           restore-keys: |
             v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-
 
@@ -42,10 +42,10 @@ jobs:
           ocaml-version: ${{ matrix.ocaml-version }}
 
       - name: Pin package
-        run: opam pin add interval-tree.dev . --no-action
+        run: opam pin add interval-map.dev . --no-action
 
       - name: Query and install external dependencies
-        run: opam depext interval-tree --yes --with-doc --with-test
+        run: opam depext interval-map --yes --with-doc --with-test
 
       - name: Install dependencies
         if: steps.cache-opam.outputs.cache-hit != 'true'
