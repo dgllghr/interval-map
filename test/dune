@@ -1,12 +1,12 @@
 (library
- (name interval_tree_test)
- (libraries alcotest interval-tree)
+ (name interval_map_test)
+ (libraries alcotest interval-map)
  (modules
   (:standard \ test_runner)))
 
 (executable
  (name test_runner)
- (libraries alcotest interval_tree_test)
+ (libraries alcotest interval_map_test)
  (modules test_runner))
 
 (rule

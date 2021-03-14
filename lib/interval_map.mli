@@ -12,8 +12,6 @@ exception Invalid_interval
 
 module Make (Bound_compare : Comparable) : sig
   module Bound : sig
-    (*: sig type t = Bound_compare.t val compare : t -> t -> int end*)
-
     type t =
       | Included of Bound_compare.t
       | Excluded of Bound_compare.t
@@ -77,18 +75,23 @@ module Make (Bound_compare : Comparable) : sig
   type 'a t
 
   val empty : 'a t
-  (** [empty] is an empty interval tree. *)
+  (** [empty] is an empty interval map. *)
 
   val size : 'a t -> int
-  (** [size tree] returns the number of values stored in the [tree]. Multiple
+  (** [size map] returns the number of values stored in the [map]. Multiple
       values may be stored with each interval, so the number of values is not
       necessarily the same as the number of intervals. *)
 
-  val insert : Interval.t -> 'a -> 'a t -> 'a t
-  (** [insert interval value tree] adds [value] to the map associated with
+  val add : Interval.t -> 'a -> 'a t -> 'a t
+  (** [insert interval value map] adds [value] to [map] associated with
       [interval]. *)
 
   val query_interval : Interval.t -> 'a t -> 'a Query_results.t
+  (** [query_interval interval map] finds all values associated with [interval]
+      in the map. Results are provided as a generator, which traverses the map
+      as results are read. *)
 
   val query_interval_list : Interval.t -> 'a t -> (Interval.t * 'a list) list
+  (** [query_interval interval map] finds all values associated with [interval]
+      in the map and returns the results as a list. *)
 end

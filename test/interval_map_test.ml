@@ -1,24 +1,24 @@
 open Alcotest
-open Interval_tree
+open Interval_map
 
 let create_and_insert () =
-  let module IT = Make (Int) in
-  let module Ivl = IT.Interval in
+  let module Ivl_map = Make (Int) in
+  let module Ivl = Ivl_map.Interval in
   let t =
-    IT.empty
-    |> IT.insert (Ivl.create (Included 0) (Excluded 10)) "foo"
-    |> IT.insert (Ivl.create (Included 0) (Excluded 10)) "foo2"
-    |> IT.insert (Ivl.create (Excluded 0) (Included 10)) "bar"
-    |> IT.insert (Ivl.create (Included 5) (Included 10)) "baz"
-    |> IT.insert (Ivl.create (Excluded 4) (Excluded 10)) "oof"
-    |> IT.insert (Ivl.create Unbounded (Excluded 4)) "zab"
+    Ivl_map.empty
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo2"
+    |> Ivl_map.add (Ivl.create (Excluded 0) (Included 10)) "bar"
+    |> Ivl_map.add (Ivl.create (Included 5) (Included 10)) "baz"
+    |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+    |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
   in
-  check int "expected size" 6 (IT.size t)
+  check int "expected size" 6 (Ivl_map.size t)
 
 let query () =
-  let module IT = Make (Int) in
-  let module Ivl = IT.Interval in
-  let open IT.Bound in
+  let module Ivl_map = Make (Int) in
+  let module Ivl = Ivl_map.Interval in
+  let open Ivl_map.Bound in
   Random.self_init ();
   let rand_bound bound_value =
     let bound_roll = Random.int 100 in
@@ -42,21 +42,21 @@ let query () =
     in
     Ivl.create low high
   in
-  (* build the tree with random intervals *)
+  (* build the map with random intervals *)
   let ivls = ref [] in
-  let tree = ref IT.empty in
+  let map = ref Ivl_map.empty in
   let c = ref 0 in
   while !c < 1000 do
     try
       let ivl = rand_ivl () in
       ivls := ivl :: !ivls;
-      tree := IT.insert ivl (Random.int 10) !tree;
+      map := Ivl_map.add ivl (Random.int 10) !map;
       c := !c + 1
     with
-    | Interval_tree.Invalid_interval ->
+    | Invalid_interval ->
       ()
   done;
-  (* query the tree with random intervals *)
+  (* query the map with random intervals *)
   c := 0;
   while !c < 1000 do
     try
@@ -68,13 +68,15 @@ let query () =
           !ivls
       in
       let results_count =
-        IT.query_interval query !tree
-        |> IT.Query_results.fold (fun acc (_, xs) -> acc + List.length xs) 0
+        Ivl_map.query_interval query !map
+        |> Ivl_map.Query_results.fold
+             (fun acc (_, xs) -> acc + List.length xs)
+             0
       in
       check int "same number of query results" expected_count results_count;
       c := !c + 1
     with
-    | Interval_tree.Invalid_interval ->
+    | Invalid_interval ->
       ()
   done;
   flush stderr

@@ -7,9 +7,9 @@ A short, but powerful statement about your project
 maintainer: ["Dan Gallagher"]
 authors: ["Dan Gallagher"]
 license: "MIT"
-homepage: "https://github.com/dgllghr/interval-tree"
-doc: "https://Dan.github.io/interval-tree/"
-bug-reports: "https://github.com/dgllghr/interval-tree/issues"
+homepage: "https://github.com/dgllghr/interval-map"
+doc: "https://dgllghr.github.io/interval-map/"
+bug-reports: "https://github.com/dgllghr/interval-map/issues"
 depends: [
   "ocaml" {>= "4.08.0"}
   "dune" {>= "2.0"}
@@ -30,4 +30,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/dgllghr/interval-tree.git"
+dev-repo: "git+https://github.com/dgllghr/interval-map.git"

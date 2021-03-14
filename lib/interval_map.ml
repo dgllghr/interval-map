@@ -211,7 +211,7 @@ module Make (Bound_compare : Comparable.S) = struct
 
   let size { root } = match root with None -> 0 | Some n -> Node.size n
 
-  let insert interval value { root } =
+  let add interval value { root } =
     let new_root =
       match root with
       | None ->
