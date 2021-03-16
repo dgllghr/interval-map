@@ -1,9 +1,9 @@
 open Alcotest
 open Interval_map
+module Ivl_map = Make (Int)
+module Ivl = Ivl_map.Interval
 
 let create_and_add () =
-  let module Ivl_map = Make (Int) in
-  let module Ivl = Ivl_map.Interval in
   let map =
     Ivl_map.empty
     |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
@@ -16,8 +16,6 @@ let create_and_add () =
   check int "expected size" 6 (Ivl_map.size map)
 
 let remove () =
-  let module Ivl_map = Make (Int) in
-  let module Ivl = Ivl_map.Interval in
   let map =
     Ivl_map.empty
     |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
@@ -59,9 +57,39 @@ let remove () =
   in
   check int "expected size" 0 (Ivl_map.size map)
 
+let find_and_mem () =
+  let map =
+    Ivl_map.empty
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo2"
+    |> Ivl_map.add (Ivl.create (Excluded 0) (Included 10)) "bar"
+    |> Ivl_map.add (Ivl.create (Included 5) (Included 10)) "baz"
+    |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+    |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
+  in
+  check
+    bool
+    "mem should not be found"
+    false
+    (Ivl_map.mem (Ivl.create (Included 0) (Included 10)) map);
+  check
+    bool
+    "mem should be found"
+    true
+    (Ivl_map.mem (Ivl.create (Included 0) (Excluded 10)) map);
+  check
+    bool
+    "mem should be found"
+    true
+    (Ivl_map.mem (Ivl.create Unbounded (Excluded 4)) map);
+  let res = Ivl_map.find_opt (Ivl.create (Included 0) (Excluded 10)) map in
+  let res = Option.map (fun xs -> List.sort String.compare xs) res in
+  check (option (list string)) "find result" (Some [ "foo"; "foo2" ]) res;
+  check_raises "not found" Not_found (fun () ->
+      let _ = Ivl_map.find (Ivl.create Unbounded (Included 4)) map in
+      ())
+
 let query () =
-  let module Ivl_map = Make (Int) in
-  let module Ivl = Ivl_map.Interval in
   let open Ivl_map.Bound in
   Random.self_init ();
   let rand_bound bound_value =
@@ -128,5 +156,6 @@ let query () =
 let suite =
   [ "create and add", `Quick, create_and_add
   ; "remove", `Quick, remove
+  ; "find and mem", `Quick, find_and_mem
   ; "query", `Quick, query
   ]

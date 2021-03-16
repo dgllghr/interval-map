@@ -2,7 +2,7 @@
 
 [![Actions Status](https://github.com/dgllghr/interval-map/workflows/CI/badge.svg)](https://github.com/dgllghr/interval-map/actions)
 
-[Documentation](https://dgllghr.github.io/interval-map/)
+[Documentation](https://dgllghr.github.io/interval-map/interval-map/index.html)
 
 An immutable interval map data structure implemented as an interval tree. Based on [jgblight/im_interval_tree](https://github.com/jgblight/im_interval_tree).
 
@@ -34,7 +34,7 @@ in
 let query = Ivl.create Unbounded (Included 4) in
 Ivl_map.query_interval query map
 |> Ivl_map.Query_results.to_list
-(* Results in:
+(* Results:
   [({Ivl_map.Interval.low = Ivl_map.Bound.Unbounded; high = Ivl_map.Bound.Excluded 4},
     ["zab"]);
     ({Ivl_map.Interval.low = Ivl_map.Bound.Included 0; high = Ivl_map.Bound.Excluded 10},
