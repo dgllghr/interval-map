@@ -1,11 +1,8 @@
-(* Based (heavily) on
-   https://github.com/jgblight/im_interval_tree/blob/main/src/interval.rs *)
-
 module type Comparable = Comparable.S
 
 exception Invalid_interval = Interval.Invalid_interval
 
-module Make (Bound_compare : Comparable.S) = struct
+module Make (Bound_compare : Comparable) = struct
   module Bound = Bound.Make (Bound_compare)
   module Interval = Interval.Make (Bound)
 
@@ -22,7 +19,7 @@ module Make (Bound_compare : Comparable.S) = struct
 
     let height node = match node with None -> 0 | Some n -> n.height
 
-    let get_max (interval : Interval.t) left right =
+    let max_bound (interval : Interval.t) left right =
       let mid = interval.high in
       match left, right with
       | None, None ->
@@ -34,7 +31,7 @@ module Make (Bound_compare : Comparable.S) = struct
       | Some l, Some r ->
         Bound.max_upper mid (Bound.max_upper l.max r.max)
 
-    let get_min (interval : Interval.t) left right =
+    let min_bound (interval : Interval.t) left right =
       let mid = interval.low in
       match left, right with
       | None, None ->
@@ -48,8 +45,8 @@ module Make (Bound_compare : Comparable.S) = struct
 
     let create interval left right values =
       let height = max (height left) (height right) + 1 in
-      let max = get_max interval left right in
-      let min = get_min interval left right in
+      let max = max_bound interval left right in
+      let min = min_bound interval left right in
       { interval; left; right; height; max; min; values }
 
     let leaf interval values = create interval None None values
@@ -69,6 +66,15 @@ module Make (Bound_compare : Comparable.S) = struct
           go rt size
       in
       go node 0
+
+    let rec find interval node =
+      let ivl_cmp = Interval.compare interval node.interval in
+      if ivl_cmp = 0 then
+        Some node
+      else if ivl_cmp < 0 then
+        match node.left with None -> None | Some lt -> find interval lt
+      else
+        match node.right with None -> None | Some rt -> find interval rt
 
     let balance_factor { left; right; _ } = height left - height right
 
@@ -132,13 +138,10 @@ module Make (Bound_compare : Comparable.S) = struct
       in
       balance res
 
-    let rec minimum_interval node =
-      match node.left with
-      | None ->
-        node.interval
-      | Some lt ->
-        minimum_interval lt
+    let rec min_interval node =
+      match node.left with None -> node.interval | Some lt -> min_interval lt
 
+    (* Not tail recursive! *)
     let rec remove_by interval value_rm_fn node =
       let ivl_cmp = Interval.compare interval node.interval in
       let res =
@@ -154,7 +157,7 @@ module Make (Bound_compare : Comparable.S) = struct
           | _, None, Some rt ->
             Some rt
           | _, Some _, Some rt ->
-            let successor = minimum_interval rt in
+            let successor = min_interval rt in
             let rt = remove_by interval value_rm_fn rt in
             let node = create successor node.left rt values in
             Some node
@@ -254,6 +257,8 @@ module Make (Bound_compare : Comparable.S) = struct
 
   let size { root } = match root with None -> 0 | Some n -> Node.size n
 
+  let cardinal = size
+
   let add interval value { root } =
     let new_root =
       match root with
@@ -263,6 +268,24 @@ module Make (Bound_compare : Comparable.S) = struct
         Node.insert interval value n
     in
     { root = Some new_root }
+
+  let find_opt interval { root } =
+    let open Node in
+    match root with
+    | None ->
+      None
+    | Some n ->
+      Node.find interval n |> Option.map (fun n -> n.values)
+
+  let find interval map =
+    match find_opt interval map with None -> raise Not_found | Some v -> v
+
+  let mem interval { root } =
+    match root with
+    | None ->
+      false
+    | Some n ->
+      Node.find interval n |> Option.is_some
 
   let query_interval interval { root } = Query_results.create interval root
 
