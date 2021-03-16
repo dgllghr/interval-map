@@ -131,6 +131,49 @@ module Make (Bound_compare : Comparable.S) = struct
           { node with values = value :: node.values }
       in
       balance res
+
+    let rec minimum_interval node =
+      match node.left with
+      | None ->
+        node.interval
+      | Some lt ->
+        minimum_interval lt
+
+    let rec remove_by interval value_rm_fn node =
+      let ivl_cmp = Interval.compare interval node.interval in
+      let res =
+        if ivl_cmp = 0 then
+          let values = List.filter (fun v -> not (value_rm_fn v)) node.values in
+          match values, node.left, node.right with
+          | _ :: _, _, _ ->
+            Some { node with values }
+          | _, None, None ->
+            None
+          | _, Some lt, None ->
+            Some lt
+          | _, None, Some rt ->
+            Some rt
+          | _, Some _, Some rt ->
+            let successor = minimum_interval rt in
+            let rt = remove_by interval value_rm_fn rt in
+            let node = create successor node.left rt values in
+            Some node
+        else if ivl_cmp < 0 then
+          match node.left with
+          | None ->
+            Some node
+          | Some lt ->
+            let lt = remove_by interval value_rm_fn lt in
+            Some (replace_left node lt)
+        else
+          match node.right with
+          | None ->
+            Some node
+          | Some rt ->
+            let rt = remove_by interval value_rm_fn rt in
+            Some (replace_right node rt)
+      in
+      match res with None -> None | Some n -> Some (balance n)
   end
 
   module Query_results = struct
@@ -225,4 +268,13 @@ module Make (Bound_compare : Comparable.S) = struct
 
   let query_interval_list interval { root } =
     Query_results.create interval root |> Query_results.to_list
+
+  let remove_by interval value_rm_fn map =
+    match map.root with
+    | None ->
+      map
+    | Some n ->
+      { root = Node.remove_by interval value_rm_fn n }
+
+  let remove_interval interval map = remove_by interval (fun _ -> true) map
 end

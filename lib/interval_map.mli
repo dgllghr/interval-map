@@ -86,6 +86,14 @@ module Make (Bound_compare : Comparable) : sig
   (** [insert interval value map] adds [value] to [map] associated with
       [interval]. *)
 
+  val remove_by : Interval.t -> ('a -> bool) -> 'a t -> 'a t
+  (** [remove_by interval value_rm_fn map] removes all values associated with
+      [interval] for which [value_rm_fn] returns true in [map]. *)
+
+  val remove_interval : Interval.t -> 'a t -> 'a t
+  (** [remove_interval interval map] removes the interval and all associated
+      values from [map]. *)
+
   val query_interval : Interval.t -> 'a t -> 'a Query_results.t
   (** [query_interval interval map] finds all values associated with [interval]
       in the map. Results are provided as a generator, which traverses the map

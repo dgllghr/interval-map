@@ -1,10 +1,10 @@
 open Alcotest
 open Interval_map
 
-let create_and_insert () =
+let create_and_add () =
   let module Ivl_map = Make (Int) in
   let module Ivl = Ivl_map.Interval in
-  let t =
+  let map =
     Ivl_map.empty
     |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
     |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo2"
@@ -13,7 +13,51 @@ let create_and_insert () =
     |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
     |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
   in
-  check int "expected size" 6 (Ivl_map.size t)
+  check int "expected size" 6 (Ivl_map.size map)
+
+let remove () =
+  let module Ivl_map = Make (Int) in
+  let module Ivl = Ivl_map.Interval in
+  let map =
+    Ivl_map.empty
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo2"
+    |> Ivl_map.add (Ivl.create (Excluded 0) (Included 10)) "bar"
+    |> Ivl_map.add (Ivl.create (Included 5) (Included 10)) "baz"
+    |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+    |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
+  in
+  let map =
+    Ivl_map.remove_by
+      (Ivl.create (Included 0) (Excluded 10))
+      (fun v -> v = "foo")
+      map
+  in
+  check int "expected size" 5 (Ivl_map.size map);
+  let map =
+    Ivl_map.remove_by
+      (Ivl.create (Included 0) (Excluded 10))
+      (fun v -> v = "foo2")
+      map
+  in
+  check int "expected size" 4 (Ivl_map.size map);
+  let map =
+    Ivl_map.remove_by
+      (Ivl.create (Excluded 0) (Included 10))
+      (fun v -> v = "bar")
+      map
+  in
+  check int "expected size" 3 (Ivl_map.size map);
+  let map = Ivl_map.remove_interval (Ivl.create Unbounded (Excluded 4)) map in
+  check int "expected size" 2 (Ivl_map.size map);
+  let map =
+    Ivl_map.remove_interval (Ivl.create (Excluded 4) (Excluded 10)) map
+  in
+  check int "expected size" 1 (Ivl_map.size map);
+  let map =
+    Ivl_map.remove_interval (Ivl.create (Included 5) (Included 10)) map
+  in
+  check int "expected size" 0 (Ivl_map.size map)
 
 let query () =
   let module Ivl_map = Make (Int) in
@@ -82,4 +126,7 @@ let query () =
   flush stderr
 
 let suite =
-  [ "create and insert", `Quick, create_and_insert; "query", `Quick, query ]
+  [ "create and add", `Quick, create_and_add
+  ; "remove", `Quick, remove
+  ; "query", `Quick, query
+  ]
