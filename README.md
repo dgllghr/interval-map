@@ -2,6 +2,8 @@
 
 [![Actions Status](https://github.com/dgllghr/interval-map/workflows/CI/badge.svg)](https://github.com/dgllghr/interval-map/actions)
 
+[Documentation](https://dgllghr.github.io/interval-map/)
+
 An immutable interval map data structure implemented as an interval tree. Based on [jgblight/im_interval_tree](https://github.com/jgblight/im_interval_tree).
 
 Interval maps are great for finding intervals and their associated values which overlap a given interval. This interval map supports intervals with excluded, included, and unbounded bound ends. Multiple values may be associated with the same interval.
@@ -13,8 +15,6 @@ opam install interval-map
 ```
 
 ## Usage
-
-### In OCaml
 
 ```ocaml
 let module Ivl_map = Interval_map.Make (Int) in
