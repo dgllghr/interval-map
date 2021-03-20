@@ -1,9 +1,9 @@
 open Alcotest
 open Interval_map
+module Ivl_map = Make (Int)
+module Ivl = Ivl_map.Interval
 
 let create_and_add () =
-  let module Ivl_map = Make (Int) in
-  let module Ivl = Ivl_map.Interval in
   let map =
     Ivl_map.empty
     |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
@@ -16,8 +16,6 @@ let create_and_add () =
   check int "expected size" 6 (Ivl_map.size map)
 
 let remove () =
-  let module Ivl_map = Make (Int) in
-  let module Ivl = Ivl_map.Interval in
   let map =
     Ivl_map.empty
     |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
@@ -113,17 +111,14 @@ let query () =
       in
       let results_count =
         Ivl_map.query_interval query !map
-        |> Ivl_map.Query_results.fold
-             (fun acc (_, xs) -> acc + List.length xs)
-             0
+        |> Ivl_map.Gen.fold (fun acc _ xs -> acc + List.length xs) 0
       in
       check int "same number of query results" expected_count results_count;
       c := !c + 1
     with
     | Invalid_interval ->
       ()
-  done;
-  flush stderr
+  done
 
 let suite =
   [ "create and add", `Quick, create_and_add
