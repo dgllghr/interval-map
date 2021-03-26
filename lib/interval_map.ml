@@ -6,7 +6,7 @@ module type Comparable = Comparable.S
 
 exception Invalid_interval = Interval.Invalid_interval
 
-module Make (Bound_compare : Comparable.S) = struct
+module Make (Bound_compare : Comparable) = struct
   module Bound = Bound.Make (Bound_compare)
   module Interval = Interval.Make (Bound)
 
@@ -25,7 +25,7 @@ module Make (Bound_compare : Comparable.S) = struct
 
     let height node = match node with None -> 0 | Some n -> n.height
 
-    let get_max (interval : Interval.t) left right =
+    let max_bound (interval : Interval.t) left right =
       let mid = interval.high in
       match left, right with
       | None, None ->
@@ -37,7 +37,7 @@ module Make (Bound_compare : Comparable.S) = struct
       | Some l, Some r ->
         Bound.max_upper mid (Bound.max_upper l.max r.max)
 
-    let get_min (interval : Interval.t) left right =
+    let min_bound (interval : Interval.t) left right =
       let mid = interval.low in
       match left, right with
       | None, None ->
@@ -51,8 +51,8 @@ module Make (Bound_compare : Comparable.S) = struct
 
     let create interval left right values =
       let height = max (height left) (height right) + 1 in
-      let max = get_max interval left right in
-      let min = get_min interval left right in
+      let max = max_bound interval left right in
+      let min = min_bound interval left right in
       { interval; left; right; height; max; min; values }
 
     let leaf interval values = Some (create interval None None values)
