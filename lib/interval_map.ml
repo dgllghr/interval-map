@@ -227,6 +227,25 @@ module Make (Bound_compare : Comparable.S) = struct
           match res with None -> None | Some n -> Some (balance n)
         in
         remove node
+
+    let fold_bf fn acc = function
+      | None ->
+        acc
+      | Some node ->
+        let rec go acc = function
+          | [] ->
+            acc
+          | node :: stack ->
+            let stack =
+              Option.fold ~none:stack ~some:(fun lt -> lt :: stack) node.left
+            in
+            let stack =
+              Option.fold ~none:stack ~some:(fun rt -> rt :: stack) node.right
+            in
+            let acc = fn acc node in
+            go acc stack
+        in
+        go acc [ node ]
   end
 
   module Gen = struct
@@ -353,12 +372,14 @@ module Make (Bound_compare : Comparable.S) = struct
     Gen.create Asc map |> Gen.fold (fun acc ivl values -> fn ivl values acc) acc
 
   let mapi fn map =
-    Gen.create Asc map
-    |> Gen.fold
-         (fun map ivl values ->
-           let values = fn ivl values in
-           Tree.add_replace_all ivl values map)
-         empty
+    Tree.fold_bf
+      (fun map node ->
+        Tree.add_replace_all
+          node.interval
+          Tree.(fn node.interval node.values)
+          map)
+      empty
+      map
 
   let map fn = mapi (fun _ values -> fn values)
 
