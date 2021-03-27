@@ -1,3 +1,7 @@
+type order =
+  | Asc
+  | Desc
+
 module type Comparable = sig
   type t
 
@@ -60,16 +64,18 @@ module Make (Bound_compare : Comparable) : sig
         [false] otherwise. *)
   end
 
-  module Query_results : sig
+  module Gen : sig
     type 'a t
 
-    val fold : ('acc -> Interval.t * 'a list -> 'acc) -> 'acc -> 'a t -> 'acc
-    (** [fold fn acc results] folds over [results] using function [fn], which
-        takes the accumulator and each element as parameters and returns the
-        updated accumulator. *)
+    val next : 'a t -> ((Interval.t * 'a list) * 'a t) option
+    (** [next gen] retrieves the next interval and associated values of [gen]
+        along with the updated state of the generator or [None] if the generator
+        is exhausted. *)
 
-    val to_list : 'a t -> (Interval.t * 'a list) list
-    (** [to_list results] transforms [results] to a list *)
+    val fold : ('acc -> Interval.t -> 'a list -> 'acc) -> 'acc -> 'a t -> 'acc
+    (** [fold fn acc gen] folds over [gen] using function [fn], which takes the
+        accumulator, interval, and values as parameters and returns the updated
+        accumulator. *)
   end
 
   type 'a t
@@ -98,25 +104,62 @@ module Make (Bound_compare : Comparable) : sig
   (** [remove_interval interval map] removes the interval and all associated
       values from [map]. Not tail recursive. *)
 
+  val generator : ?order:order -> 'a t -> 'a Gen.t
+  (** [generator order map] creates a generator that traverses [map]. See [Gen]
+      for generator API. *)
+
+  val fold : (Interval.t -> 'a list -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  (** [fold fn map acc] folds over [map] applying function [fn] in ascending
+      order of the intervals. [fn] takes the interval, values, and the
+      accumulator as parameters and returns the updated accumulator. Tail
+      recursive. *)
+
+  val mapi : (Interval.t -> 'a list -> 'b list) -> 'a t -> 'b t
+  (** [mapi fn map] builds a new interval map by applying [fn] to the elements
+      in [map]. Elements are not traversed in order. Tail recursive. *)
+
+  val map : ('a list -> 'b list) -> 'a t -> 'b t
+  (** [map fn map] is like [mapi] but [fn] does not receive the interval. Tail
+      recursive. *)
+
+  val iteri : (Interval.t -> 'a list -> unit) -> 'a t -> unit
+  (** [iteri fn map] applies [fn] to every element of the map in ascending order
+      of the intervals. [fn] received both the interval and associated values
+      and returns [unit]. Tail recursive. *)
+
+  val iter : ('a list -> unit) -> 'a t -> unit
+  (** [iter fn map] is like [iteri] but [fn] does not receive the interval. Tail
+      recursive. *)
+
+  val to_list : 'a t -> (Interval.t * 'a list) list
+  (** [to_list map] converts [map] into a [list] where the elements of the
+      resulting list are in ascending order by interval. Tail recursive. *)
+
+  val to_seq : 'a t -> (Interval.t * 'a list) Seq.t
+  (** [to_seq map] converts [map] into a [Seq.t] where the elements of the
+      resulting seq are in ascending order by interval. Seqs are lazy so
+      elements of the map are not traversed until the resulting seq is
+      traversed. *)
+
   val find_opt : Interval.t -> 'a t -> 'a list option
   (** [find_opt interval map] finds all values associated with [interval] in
-      [map], or [None] if [map] does not contain [interval]. *)
+      [map], or [None] if [map] does not contain [interval]. Tail recursive. *)
 
   val find : Interval.t -> 'a t -> 'a list
   (** [find interval map] finds all values associated with [interval] in [map],
-      or raises [Not_found] if [map] does not contain [interval]. *)
+      or raises [Not_found] if [map] does not contain [interval]. Tail
+      recursive. *)
 
   val mem : Interval.t -> 'a t -> bool
   (** [mem interval map] returns [true] if [map] contains [interval], and
-      [false] otherwise. *)
+      [false] otherwise. Tail recursive. *)
 
-  val query_interval : Interval.t -> 'a t -> 'a Query_results.t
-  (** [query_interval interval map] finds all intervals that intersect
-      [interval] in [map] and their associated values. Results are provided as a
-      generator, which traverses [map] as results are read. *)
+  val query_interval : ?order:order -> Interval.t -> 'a t -> 'a Gen.t
+  (** [query_interval interval map] finds all values associated with [interval]
+      in the map. Results are provided as a generator, which traverses the map
+      as results are read. *)
 
   val query_interval_list : Interval.t -> 'a t -> (Interval.t * 'a list) list
-  (** [query_interval interval map] finds all intervals that intersect
-      [interval] in [map] and their associated values and returns the results as
-      a list. *)
+  (** [query_interval interval map] finds all values associated with [interval]
+      in the map and returns the results as a list. Tail recursive. *)
 end

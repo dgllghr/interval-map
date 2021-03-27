@@ -57,6 +57,77 @@ let remove () =
   in
   check int "expected size" 0 (Ivl_map.size map)
 
+let generator () =
+  let module Gen = Ivl_map.Gen in
+  let map =
+    Ivl_map.empty
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo2"
+    |> Ivl_map.add (Ivl.create (Excluded 0) (Included 10)) "bar"
+    |> Ivl_map.add (Ivl.create (Included 5) (Included 10)) "baz"
+    |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+    |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
+    |> Ivl_map.add (Ivl.create (Excluded 0) Unbounded) "zip"
+  in
+  let check_next_exists value next =
+    check bool "has next" true (Option.is_some next);
+    let (_ivl, values), gen = Option.get next in
+    check (list string) "next value" value (List.sort String.compare values);
+    gen
+  in
+  let rec check_produces values gen =
+    let next = Gen.next gen in
+    match values with
+    | hd :: tl ->
+      let gen = check_next_exists hd next in
+      check_produces tl gen
+    | [] ->
+      check bool "is exhausted" false (Option.is_some next)
+  in
+  (* Ascending *)
+  let gen = Ivl_map.generator ~order:Asc map in
+  check_produces
+    [ [ "zab" ]; [ "foo"; "foo2" ]; [ "bar" ]; [ "zip" ]; [ "oof" ]; [ "baz" ] ]
+    gen;
+  (* Descending *)
+  let gen = Ivl_map.generator ~order:Desc map in
+  check_produces
+    [ [ "baz" ]; [ "oof" ]; [ "zip" ]; [ "bar" ]; [ "foo"; "foo2" ]; [ "zab" ] ]
+    gen
+
+let map () =
+  let map =
+    Ivl_map.empty
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo"
+    |> Ivl_map.add (Ivl.create (Included 0) (Excluded 10)) "foo2"
+    |> Ivl_map.add (Ivl.create (Excluded 0) (Included 10)) "bar"
+    |> Ivl_map.add (Ivl.create (Included 5) (Included 10)) "baz"
+    |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
+    |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
+    |> Ivl_map.add (Ivl.create (Excluded 0) Unbounded) "zip"
+  in
+  let map =
+    Ivl_map.mapi
+      (fun _ivl values -> "pre" :: List.sort String.compare values)
+      map
+  in
+  let res =
+    Ivl_map.to_list map
+    |> List.sort (fun (ivl1, _) (ivl2, _) -> Ivl.compare ivl1 ivl2)
+    |> List.map snd
+  in
+  check
+    (list (list string))
+    "map"
+    [ [ "pre"; "zab" ]
+    ; [ "pre"; "foo"; "foo2" ]
+    ; [ "pre"; "bar" ]
+    ; [ "pre"; "zip" ]
+    ; [ "pre"; "oof" ]
+    ; [ "pre"; "baz" ]
+    ]
+    res
+
 let find_and_mem () =
   let map =
     Ivl_map.empty
@@ -141,21 +212,20 @@ let query () =
       in
       let results_count =
         Ivl_map.query_interval query !map
-        |> Ivl_map.Query_results.fold
-             (fun acc (_, xs) -> acc + List.length xs)
-             0
+        |> Ivl_map.Gen.fold (fun acc _ xs -> acc + List.length xs) 0
       in
       check int "same number of query results" expected_count results_count;
       c := !c + 1
     with
     | Invalid_interval ->
       ()
-  done;
-  flush stderr
+  done
 
 let suite =
   [ "create and add", `Quick, create_and_add
   ; "remove", `Quick, remove
+  ; "generator", `Quick, generator
   ; "find and mem", `Quick, find_and_mem
   ; "query", `Quick, query
+  ; "map", `Quick, map
   ]
