@@ -392,5 +392,9 @@ module Make (Bound_compare : Comparable) = struct
     Gen.create Desc map
     |> Gen.fold (fun xs ivl values -> (ivl, values) :: xs) []
 
-  let to_seq map = Gen.create Asc map |> Seq.unfold Gen.next
+  let rec seq_unfold f u () =
+    let open Seq in
+    match f u with None -> Nil | Some (x, u) -> Cons (x, seq_unfold f u)
+
+  let to_seq map = Gen.create Asc map |> seq_unfold Gen.next
 end
