@@ -116,11 +116,11 @@ module Make (Bound_compare : Comparable) : sig
 
   val mapi : (Interval.t -> 'a list -> 'b list) -> 'a t -> 'b t
   (** [mapi fn map] builds a new interval map by applying [fn] to the elements
-      in [map]. Elements are not traversed in order. Not tail recursive. *)
+      in [map]. Elements are not traversed in order. Tail recursive. *)
 
   val map : ('a list -> 'b list) -> 'a t -> 'b t
-  (** [map fn map] is like [mapi] but [fn] does not receive the interval. Not
-      tail recursive. *)
+  (** [map fn map] is like [mapi] but [fn] does not receive the interval. Tail
+      recursive. *)
 
   val iteri : (Interval.t -> 'a list -> unit) -> 'a t -> unit
   (** [iteri fn map] applies [fn] to every element of the map in ascending order

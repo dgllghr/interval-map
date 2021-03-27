@@ -232,20 +232,19 @@ module Make (Bound_compare : Comparable) = struct
       | None ->
         acc
       | Some node ->
-        let rec go acc = function
-          | [] ->
+        let queue = Queue.create () in
+        Queue.add node queue;
+        let rec iter acc =
+          match Queue.take_opt queue with
+          | None ->
             acc
-          | node :: stack ->
-            let stack =
-              Option.fold ~none:stack ~some:(fun lt -> lt :: stack) node.left
-            in
-            let stack =
-              Option.fold ~none:stack ~some:(fun rt -> rt :: stack) node.right
-            in
+          | Some node ->
+            Option.iter (fun lt -> Queue.add lt queue) node.left;
+            Option.iter (fun rt -> Queue.add rt queue) node.right;
             let acc = fn acc node in
-            go acc stack
+            iter acc
         in
-        go acc [ node ]
+        iter acc
   end
 
   module Gen = struct
@@ -371,7 +370,7 @@ module Make (Bound_compare : Comparable) = struct
   let fold fn map acc =
     Gen.create Asc map |> Gen.fold (fun acc ivl values -> fn ivl values acc) acc
 
-  let mapi fn map =
+  let mapi fn =
     Tree.fold_bf
       (fun map node ->
         Tree.add_replace_all
@@ -379,7 +378,6 @@ module Make (Bound_compare : Comparable) = struct
           Tree.(fn node.interval node.values)
           map)
       empty
-      map
 
   let map fn = mapi (fun _ values -> fn values)
 
