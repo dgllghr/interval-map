@@ -335,22 +335,22 @@ module Make (Bound_compare : Comparable) = struct
     let go_left left =
       match left.max, query.low with
       | Included max, Included low ->
-        max >= low
+        Bound.C.compare max low >= 0
       | Included max, Excluded low
       | Excluded max, Included low
       | Excluded max, Excluded low ->
-        max > low
+        Bound.C.compare max low > 0
       | _ ->
         true
     in
     let go_right right =
       match right.min, query.high with
       | Included min, Included high ->
-        min <= high
+        Bound.C.compare min high <= 0
       | Included min, Excluded high
       | Excluded min, Included high
       | Excluded min, Excluded high ->
-        min < high
+        Bound.C.compare min high < 0
       | _ ->
         true
     in

@@ -11,11 +11,11 @@ module Make (Bound : Bound.S) = struct
   let is_valid_bounds low high =
     match low, high with
     | Included low, Included high ->
-      low <= high
+      C.compare low high <= 0
     | Included low, Excluded high
     | Excluded low, Included high
     | Excluded low, Excluded high ->
-      low < high
+      C.compare low high < 0
     | _ ->
       true
 

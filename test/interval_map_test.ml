@@ -221,6 +221,54 @@ let query () =
       ()
   done
 
+let with_complex_type () =
+  let module Position = struct
+    type t = {
+      character : int;
+      line : int;
+    }
+
+    let compare (p1 : t) (p2 : t) =
+      let c = Int.compare p1.line p2.line in
+      if c = 0 then Int.compare p1.character p2.character else c
+
+    let create ~line ~character = { line; character }
+  end
+  in
+  let module Ivl_map = Interval_map.Make (Position) in
+  let module Ivl = Ivl_map.Interval in
+  let open Position in
+  let p1 = create ~line:0 ~character:1 in
+  let p2 = create ~line:0 ~character:3 in
+  let p3 = create ~line:1 ~character:2 in
+  let p4 = create ~line:1 ~character:6 in
+  let p5 = create ~line:2 ~character:0 in
+  let map =
+    Ivl_map.empty
+    |> Ivl_map.add (Ivl.create (Excluded p1) (Included p2)) "foo"
+    |> Ivl_map.add (Ivl.create (Included p3) (Included p4)) "(bar)"
+    |> Ivl_map.add (Ivl.create (Excluded p3) (Excluded p4)) "bar"
+    |> Ivl_map.add (Ivl.create (Excluded p1) (Excluded p5)) "(foo\n  (bar)\n)"
+  in
+  check int "expected size" 4 (Ivl_map.size map);
+  check bool "mem should be found" true
+    (Ivl_map.mem (Ivl.create (Excluded p1) (Included p2)) map);
+  check bool "mem should not be found" false
+    (Ivl_map.mem (Ivl.create (Excluded p1) (Included p4)) map);
+  check_raises "should not be found" Not_found (fun _ ->
+    ignore @@ Ivl_map.find (Ivl.create (Excluded p3) (Included p4)) map);
+  let query_pos : t = { line = 1; character = 4 } in
+  let res =
+    Ivl_map.query_interval_list
+      (Ivl.create (Included query_pos) (Included query_pos))
+      map
+  in
+  check
+    (list (list string))
+    "query should stab three ranges"
+    [ [ "(foo\n  (bar)\n)" ]; [ "(bar)" ]; [ "bar" ] ]
+    (List.map snd res)
+
 let suite =
   [ "create and add", `Quick, create_and_add
   ; "remove", `Quick, remove
@@ -228,4 +276,5 @@ let suite =
   ; "find and mem", `Quick, find_and_mem
   ; "query", `Quick, query
   ; "map", `Quick, map
+  ; "with complex type", `Quick, with_complex_type
   ]
