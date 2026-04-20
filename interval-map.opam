@@ -18,8 +18,8 @@ homepage: "https://github.com/dgllghr/interval-map"
 doc: "https://dgllghr.github.io/interval-map/"
 bug-reports: "https://github.com/dgllghr/interval-map/issues"
 depends: [
+  "dune" {>= "3.0"}
   "ocaml" {>= "4.08.0"}
-  "dune" {>= "3.0" & >= "3.0"}
   "alcotest" {>= "1.4.0" & with-test}
   "odoc" {with-doc}
 ]
