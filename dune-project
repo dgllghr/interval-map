@@ -1,4 +1,4 @@
-(lang dune 2.0)
+(lang dune 3.0)
 (name interval-map)
 (version 0.1.0)
 (documentation "https://dgllghr.github.io/interval-map/")
@@ -23,6 +23,6 @@ same interval.
 ")
  (depends
   (ocaml (>= 4.08.0))
-  (dune (>= 2.0))
-  (alcotest :with-test)
+  (dune (>= 3.0))
+  (alcotest (and (>= 1.4.0) :with-test))
   (odoc :with-doc)))

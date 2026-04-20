@@ -79,10 +79,9 @@ let generator () =
     let next = Gen.next gen in
     match values with
     | hd :: tl ->
-      let gen = check_next_exists hd next in
-      check_produces tl gen
-    | [] ->
-      check bool "is exhausted" false (Option.is_some next)
+        let gen = check_next_exists hd next in
+        check_produces tl gen
+    | [] -> check bool "is exhausted" false (Option.is_some next)
   in
   (* Ascending *)
   let gen = Ivl_map.generator ~order:Asc map in
@@ -119,12 +118,13 @@ let map () =
   check
     (list (list string))
     "map"
-    [ [ "pre"; "zab" ]
-    ; [ "pre"; "foo"; "foo2" ]
-    ; [ "pre"; "bar" ]
-    ; [ "pre"; "zip" ]
-    ; [ "pre"; "oof" ]
-    ; [ "pre"; "baz" ]
+    [
+      [ "pre"; "zab" ];
+      [ "pre"; "foo"; "foo2" ];
+      [ "pre"; "bar" ];
+      [ "pre"; "zip" ];
+      [ "pre"; "oof" ];
+      [ "pre"; "baz" ];
     ]
     res
 
@@ -138,20 +138,11 @@ let find_and_mem () =
     |> Ivl_map.add (Ivl.create (Excluded 4) (Excluded 10)) "oof"
     |> Ivl_map.add (Ivl.create Unbounded (Excluded 4)) "zab"
   in
-  check
-    bool
-    "mem should not be found"
-    false
+  check bool "mem should not be found" false
     (Ivl_map.mem (Ivl.create (Included 0) (Included 10)) map);
-  check
-    bool
-    "mem should be found"
-    true
+  check bool "mem should be found" true
     (Ivl_map.mem (Ivl.create (Included 0) (Excluded 10)) map);
-  check
-    bool
-    "mem should be found"
-    true
+  check bool "mem should be found" true
     (Ivl_map.mem (Ivl.create Unbounded (Excluded 4)) map);
   let res = Ivl_map.find_opt (Ivl.create (Included 0) (Excluded 10)) map in
   let res = Option.map (fun xs -> List.sort String.compare xs) res in
@@ -165,24 +156,16 @@ let query () =
   Random.self_init ();
   let rand_bound bound_value =
     let bound_roll = Random.int 100 in
-    if bound_roll >= 90 then
-      Unbounded
-    else if bound_roll >= 45 then
-      Excluded bound_value
-    else
-      Included bound_value
+    if bound_roll >= 90 then Unbounded
+    else if bound_roll >= 45 then Excluded bound_value
+    else Included bound_value
   in
   let rand_ivl () =
     let bv1 = Random.int 100 in
     let bv2 = bv1 + Random.int 20 - 10 in
     let b1 = rand_bound bv1 in
     let b2 = rand_bound bv2 in
-    let low, high =
-      if compare_lower b1 b2 <= 0 then
-        b1, b2
-      else
-        b2, b1
-    in
+    let low, high = if compare_lower b1 b2 <= 0 then (b1, b2) else (b2, b1) in
     Ivl.create low high
   in
   (* build the map with random intervals *)
@@ -195,9 +178,7 @@ let query () =
       ivls := ivl :: !ivls;
       map := Ivl_map.add ivl (Random.int 10) !map;
       c := !c + 1
-    with
-    | Invalid_interval ->
-      ()
+    with Invalid_interval -> ()
   done;
   (* query the map with random intervals *)
   c := 0;
@@ -207,8 +188,7 @@ let query () =
       let expected_count =
         List.fold_left
           (fun acc ivl -> if Ivl.overlaps query ivl then acc + 1 else acc)
-          0
-          !ivls
+          0 !ivls
       in
       let results_count =
         Ivl_map.query_interval query !map
@@ -216,25 +196,19 @@ let query () =
       in
       check int "same number of query results" expected_count results_count;
       c := !c + 1
-    with
-    | Invalid_interval ->
-      ()
+    with Invalid_interval -> ()
   done
 
 let with_complex_type () =
   let module Position = struct
-    type t = {
-      character : int;
-      line : int;
-    }
+    type t = { character : int; line : int }
 
     let compare (p1 : t) (p2 : t) =
       let c = Int.compare p1.line p2.line in
       if c = 0 then Int.compare p1.character p2.character else c
 
     let create ~line ~character = { line; character }
-  end
-  in
+  end in
   let module Ivl_map = Interval_map.Make (Position) in
   let module Ivl = Ivl_map.Interval in
   let open Position in
@@ -256,7 +230,7 @@ let with_complex_type () =
   check bool "mem should not be found" false
     (Ivl_map.mem (Ivl.create (Excluded p1) (Included p4)) map);
   check_raises "should not be found" Not_found (fun _ ->
-    ignore @@ Ivl_map.find (Ivl.create (Excluded p3) (Included p4)) map);
+      ignore @@ Ivl_map.find (Ivl.create (Excluded p3) (Included p4)) map);
   let query_pos : t = { line = 1; character = 4 } in
   let res =
     Ivl_map.query_interval_list
@@ -270,11 +244,12 @@ let with_complex_type () =
     (List.map snd res)
 
 let suite =
-  [ "create and add", `Quick, create_and_add
-  ; "remove", `Quick, remove
-  ; "generator", `Quick, generator
-  ; "find and mem", `Quick, find_and_mem
-  ; "query", `Quick, query
-  ; "map", `Quick, map
-  ; "with complex type", `Quick, with_complex_type
+  [
+    ("create and add", `Quick, create_and_add);
+    ("remove", `Quick, remove);
+    ("generator", `Quick, generator);
+    ("find and mem", `Quick, find_and_mem);
+    ("query", `Quick, query);
+    ("map", `Quick, map);
+    ("with complex type", `Quick, with_complex_type);
   ]
