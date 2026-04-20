@@ -1,3 +1,19 @@
+## 0.2.1 (2026-04-20)
+
+### Added
+
+### Changed
+
+- Raise minimum dune to 3.0 and alcotest to 1.4.0
+
+### Deprecated
+
+### Fixed
+
+- Fix comparisons on custom interval types (@dalps, #4)
+
+### Security
+
 ## 0.2.0 (2021-03-27)
 
 ### Added
