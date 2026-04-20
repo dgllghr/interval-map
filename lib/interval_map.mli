@@ -1,6 +1,4 @@
-type order =
-  | Asc
-  | Desc
+type order = Asc | Desc
 
 module type Comparable = sig
   type t
@@ -40,10 +38,7 @@ module Make (Bound_compare : Comparable) : sig
   end
 
   module Interval : sig
-    type t = private
-      { low : Bound.t
-      ; high : Bound.t
-      }
+    type t = private { low : Bound.t; high : Bound.t }
 
     val create : Bound.t -> Bound.t -> t
     (** [create low high] creates an interval from the [low] bound and the

@@ -1,11 +1,11 @@
-(lang dune 2.0)
+(lang dune 3.0)
 (name interval-map)
 (version 0.1.0)
 (documentation "https://dgllghr.github.io/interval-map/")
 (source (github dgllghr/interval-map))
 (license MIT)
-(authors "Dan Gallagher")
-(maintainers "Dan Gallagher")
+(authors "Daniel Gallagher")
+(maintainers "Daniel Gallagher")
 
 (generate_opam_files true)
 
@@ -23,6 +23,5 @@ same interval.
 ")
  (depends
   (ocaml (>= 4.08.0))
-  (dune (>= 2.0))
-  (alcotest :with-test)
+  (alcotest (and (>= 1.4.0) :with-test))
   (odoc :with-doc)))
